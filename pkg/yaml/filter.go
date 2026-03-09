@@ -1,6 +1,4 @@
-package filter
-
-// TODO this is a duplicaate of the firestore filter - decide whether to move to a shared lib or import directly and remove from internal
+package yaml
 
 import (
 	"fmt"

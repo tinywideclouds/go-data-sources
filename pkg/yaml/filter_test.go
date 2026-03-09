@@ -1,4 +1,4 @@
-package filter_test
+package yaml_test
 
 import (
 	"testing"
@@ -18,7 +18,7 @@ exclude:
   - "vendor/**"
   - "**/*_test.go"
 `
-		rules, err := filter.ParseYAML(yamlStr)
+		rules, err := yaml.ParseYAML(yamlStr)
 		require.NoError(t, err)
 
 		assert.Len(t, rules.Include, 2)
@@ -33,28 +33,28 @@ exclude:
 	t.Run("Invalid YAML returns error", func(t *testing.T) {
 		yamlStr := `include: [unclosed array`
 
-		_, err := filter.ParseYAML(yamlStr)
+		_, err := yaml.ParseYAML(yamlStr)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "invalid YAML structure")
 	})
 }
 
-func TestFilterRules_Match(t *testing.T) {
+func TestyamlRules_Match(t *testing.T) {
 	tests := []struct {
 		name     string
-		rules    filter.FilterRules
+		rules    yaml.FilterRules
 		path     string
 		expected bool
 	}{
 		{
 			name:     "Empty rules match everything by default",
-			rules:    filter.FilterRules{},
+			rules:    yaml.FilterRules{},
 			path:     "main.go",
 			expected: true,
 		},
 		{
 			name: "Exclude overrides default inclusion",
-			rules: filter.FilterRules{
+			rules: yaml.FilterRules{
 				Exclude: []string{"vendor/**"},
 			},
 			path:     "vendor/github.com/pkg/pkg.go",
@@ -62,7 +62,7 @@ func TestFilterRules_Match(t *testing.T) {
 		},
 		{
 			name: "Include rule allows matched file",
-			rules: filter.FilterRules{
+			rules: yaml.FilterRules{
 				Include: []string{"**/*.go"},
 			},
 			path:     "cmd/api/main.go",
@@ -70,7 +70,7 @@ func TestFilterRules_Match(t *testing.T) {
 		},
 		{
 			name: "Include rule rejects unmatched file",
-			rules: filter.FilterRules{
+			rules: yaml.FilterRules{
 				Include: []string{"**/*.go"},
 			},
 			path:     "README.md",
@@ -78,7 +78,7 @@ func TestFilterRules_Match(t *testing.T) {
 		},
 		{
 			name: "Exclude strictly overrides explicit Include",
-			rules: filter.FilterRules{
+			rules: yaml.FilterRules{
 				Include: []string{"**/*.go"},
 				Exclude: []string{"**/*_test.go"},
 			},
@@ -87,7 +87,7 @@ func TestFilterRules_Match(t *testing.T) {
 		},
 		{
 			name: "Doublestar globbing matches nested directories",
-			rules: filter.FilterRules{
+			rules: yaml.FilterRules{
 				Include: []string{"src/**/*.ts"},
 			},
 			path:     "src/app/components/ui/button.ts",
@@ -95,7 +95,7 @@ func TestFilterRules_Match(t *testing.T) {
 		},
 		{
 			name: "Doublestar globbing rejects partial path mismatches",
-			rules: filter.FilterRules{
+			rules: yaml.FilterRules{
 				Include: []string{"src/**/*.ts"},
 			},
 			path:     "tests/app/components/ui/button.ts",
