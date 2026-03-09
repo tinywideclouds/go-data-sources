@@ -17,6 +17,123 @@ var (
 	}
 )
 
+// --- API REQUEST TYPES ---
+
+type CreateDataSourceRequest struct {
+	Repo   string `json:"repo"`
+	Branch string `json:"branch"`
+}
+
+type SyncRequest struct {
+	IngestionRules *FilterRules `json:"ingestionRules,omitempty"`
+}
+
+type ProfileRequest struct {
+	Name      string `json:"name"`
+	RulesYaml string `json:"rulesYaml"`
+}
+
+// --- API REQUEST MAPPERS ---
+
+func CreateDataSourceRequestToProto(native *CreateDataSourceRequest) *datasourcesv1.CreateDataSourceRequestPb {
+	if native == nil {
+		return nil
+	}
+	return &datasourcesv1.CreateDataSourceRequestPb{
+		Repo:   native.Repo,
+		Branch: native.Branch,
+	}
+}
+
+func ProtoToCreateDataSourceRequest(pb *datasourcesv1.CreateDataSourceRequestPb) *CreateDataSourceRequest {
+	if pb == nil {
+		return nil
+	}
+	return &CreateDataSourceRequest{
+		Repo:   pb.Repo,
+		Branch: pb.Branch,
+	}
+}
+
+func SyncRequestToProto(native *SyncRequest) *datasourcesv1.SyncRequestPb {
+	if native == nil {
+		return nil
+	}
+	return &datasourcesv1.SyncRequestPb{
+		IngestionRules: FilterRulesToProto(native.IngestionRules),
+	}
+}
+
+func ProtoToSyncRequest(pb *datasourcesv1.SyncRequestPb) *SyncRequest {
+	if pb == nil {
+		return nil
+	}
+	return &SyncRequest{
+		IngestionRules: ProtoToFilterRules(pb.IngestionRules),
+	}
+}
+
+func ProfileRequestToProto(native *ProfileRequest) *datasourcesv1.ProfileRequestPb {
+	if native == nil {
+		return nil
+	}
+	return &datasourcesv1.ProfileRequestPb{
+		Name:      native.Name,
+		RulesYaml: native.RulesYaml,
+	}
+}
+
+func ProtoToProfileRequest(pb *datasourcesv1.ProfileRequestPb) *ProfileRequest {
+	if pb == nil {
+		return nil
+	}
+	return &ProfileRequest{
+		Name:      pb.Name,
+		RulesYaml: pb.RulesYaml,
+	}
+}
+
+// --- API REQUEST JSON SERIALIZATION ---
+
+func (r CreateDataSourceRequest) MarshalJSON() ([]byte, error) {
+	return protojsonMarshalOptions.Marshal(CreateDataSourceRequestToProto(&r))
+}
+
+func (r *CreateDataSourceRequest) UnmarshalJSON(data []byte) error {
+	var pb datasourcesv1.CreateDataSourceRequestPb
+	if err := protojsonUnmarshalOptions.Unmarshal(data, &pb); err != nil {
+		return err
+	}
+	*r = *ProtoToCreateDataSourceRequest(&pb)
+	return nil
+}
+
+func (r SyncRequest) MarshalJSON() ([]byte, error) {
+	return protojsonMarshalOptions.Marshal(SyncRequestToProto(&r))
+}
+
+func (r *SyncRequest) UnmarshalJSON(data []byte) error {
+	var pb datasourcesv1.SyncRequestPb
+	if err := protojsonUnmarshalOptions.Unmarshal(data, &pb); err != nil {
+		return err
+	}
+	*r = *ProtoToSyncRequest(&pb)
+	return nil
+}
+
+func (r ProfileRequest) MarshalJSON() ([]byte, error) {
+	return protojsonMarshalOptions.Marshal(ProfileRequestToProto(&r))
+}
+
+func (r *ProfileRequest) UnmarshalJSON(data []byte) error {
+	var pb datasourcesv1.ProfileRequestPb
+	if err := protojsonUnmarshalOptions.Unmarshal(data, &pb); err != nil {
+		return err
+	}
+	*r = *ProtoToProfileRequest(&pb)
+	return nil
+}
+
 // --- DOMAIN TYPES ---
 
 type DataSourceAnalysis struct {
