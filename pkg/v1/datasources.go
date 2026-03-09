@@ -1,4 +1,4 @@
-package pkg
+package datasources_v1
 
 import (
 	"time"
