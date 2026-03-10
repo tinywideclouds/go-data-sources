@@ -7,13 +7,15 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	urn "github.com/tinywideclouds/go-platform/pkg/net/v1"
 )
 
 func TestDataSourceMetadataMappers(t *testing.T) {
 	now := time.Now().Truncate(time.Millisecond).UTC()
+	dsID, _ := urn.Parse("urn:data-source:123")
 
 	native := &DataSourceMetadata{
-		ID:              "ds-123",
+		ID:              dsID,
 		Repo:            "tinywideclouds/repo",
 		Branch:          "main",
 		SyncedCommitSha: "abc1234",
@@ -30,7 +32,7 @@ func TestDataSourceMetadataMappers(t *testing.T) {
 	// Test Native -> Proto
 	pb := MetadataToProto(native)
 	require.NotNil(t, pb)
-	assert.Equal(t, "ds-123", pb.Id)
+	assert.Equal(t, dsID.String(), pb.Id)
 	assert.Equal(t, "tinywideclouds/repo", pb.Repo)
 	assert.Equal(t, now.UnixMilli(), pb.LastSyncedAt)
 	assert.Equal(t, int32(42), pb.Analysis.TotalFiles)

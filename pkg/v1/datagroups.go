@@ -4,17 +4,18 @@ import (
 	"time"
 
 	datasourcesv1 "github.com/tinywideclouds/gen-data-sources/go/types/v1"
+	urn "github.com/tinywideclouds/go-platform/pkg/net/v1"
 )
 
 // --- DOMAIN TYPES ---
 
 type DataGroupSource struct {
-	DataSourceID string  `json:"dataSourceId"`
-	ProfileID    *string `json:"profileId,omitempty"`
+	DataSourceID urn.URN  `json:"dataSourceId"`
+	ProfileID    *urn.URN `json:"profileId,omitempty"`
 }
 
 type DataGroup struct {
-	ID          string             `json:"id"`
+	ID          urn.URN            `json:"id"`
 	Name        string             `json:"name"`
 	Description *string            `json:"description,omitempty"`
 	Sources     []*DataGroupSource `json:"sources"`
@@ -36,19 +37,36 @@ func DataGroupSourceToProto(native *DataGroupSource) *datasourcesv1.DataGroupSou
 	if native == nil {
 		return nil
 	}
-	return &datasourcesv1.DataGroupSourcePb{
-		DataSourceId: native.DataSourceID,
-		ProfileId:    native.ProfileID,
+	pb := &datasourcesv1.DataGroupSourcePb{
+		DataSourceId: native.DataSourceID.String(),
 	}
+
+	if native.ProfileID != nil {
+		pidStr := native.ProfileID.String()
+		pb.ProfileId = &pidStr
+	}
+
+	return pb
 }
 
 func ProtoToDataGroupSource(pb *datasourcesv1.DataGroupSourcePb) *DataGroupSource {
 	if pb == nil {
 		return nil
 	}
+
+	dsID, _ := urn.Parse(pb.DataSourceId)
+
+	var profID *urn.URN
+	if pb.ProfileId != nil {
+		pid, err := urn.Parse(*pb.ProfileId)
+		if err == nil {
+			profID = &pid
+		}
+	}
+
 	return &DataGroupSource{
-		DataSourceID: pb.DataSourceId,
-		ProfileID:    pb.ProfileId,
+		DataSourceID: dsID,
+		ProfileID:    profID,
 	}
 }
 
@@ -57,7 +75,7 @@ func DataGroupToProto(native *DataGroup) *datasourcesv1.DataGroupPb {
 		return nil
 	}
 	pb := &datasourcesv1.DataGroupPb{
-		Id:          native.ID,
+		Id:          native.ID.String(),
 		Name:        native.Name,
 		Description: native.Description,
 		Metadata:    native.Metadata,
@@ -83,8 +101,11 @@ func ProtoToDataGroup(pb *datasourcesv1.DataGroupPb) *DataGroup {
 	if pb == nil {
 		return nil
 	}
+
+	dgID, _ := urn.Parse(pb.Id)
+
 	dg := &DataGroup{
-		ID:          pb.Id,
+		ID:          dgID,
 		Name:        pb.Name,
 		Description: pb.Description,
 		Metadata:    pb.Metadata,

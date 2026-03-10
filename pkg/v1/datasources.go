@@ -4,6 +4,7 @@ import (
 	"time"
 
 	datasourcesv1 "github.com/tinywideclouds/gen-data-sources/go/types/v1"
+	urn "github.com/tinywideclouds/go-platform/pkg/net/v1"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
@@ -16,6 +17,44 @@ var (
 		DiscardUnknown: true,
 	}
 )
+
+// --- DOMAIN TYPES ---
+
+type DataSourceAnalysis struct {
+	TotalFiles     int32            `json:"totalFiles"`
+	TotalSizeBytes int32            `json:"totalSizeBytes"`
+	Extensions     map[string]int32 `json:"extensions"`
+}
+
+type DataSourceMetadata struct {
+	ID              urn.URN             `json:"id"`
+	Repo            string              `json:"repo"`
+	Branch          string              `json:"branch"`
+	SyncedCommitSha string              `json:"syncedCommitSha,omitempty"`
+	LastSyncedAt    time.Time           `json:"lastSyncedAt,omitempty"`
+	FileCount       int32               `json:"fileCount"`
+	Status          string              `json:"status"`
+	Analysis        *DataSourceAnalysis `json:"analysis,omitempty"`
+}
+
+type FileMetadata struct {
+	Path      string `json:"path"`
+	SizeBytes int32  `json:"sizeBytes"`
+	Extension string `json:"extension"`
+}
+
+type FilterRules struct {
+	Include []string `json:"include"`
+	Exclude []string `json:"exclude"`
+}
+
+type Profile struct {
+	ID        urn.URN   `json:"id"`
+	Name      string    `json:"name"`
+	RulesYaml string    `json:"rulesYaml"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
+}
 
 // --- API REQUEST TYPES ---
 
@@ -134,44 +173,6 @@ func (r *ProfileRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// --- DOMAIN TYPES ---
-
-type DataSourceAnalysis struct {
-	TotalFiles     int32            `json:"totalFiles"`
-	TotalSizeBytes int32            `json:"totalSizeBytes"`
-	Extensions     map[string]int32 `json:"extensions"`
-}
-
-type DataSourceMetadata struct {
-	ID              string              `json:"id"`
-	Repo            string              `json:"repo"`
-	Branch          string              `json:"branch"`
-	SyncedCommitSha string              `json:"syncedCommitSha,omitempty"`
-	LastSyncedAt    time.Time           `json:"lastSyncedAt,omitempty"`
-	FileCount       int32               `json:"fileCount"`
-	Status          string              `json:"status"`
-	Analysis        *DataSourceAnalysis `json:"analysis,omitempty"`
-}
-
-type FileMetadata struct {
-	Path      string `json:"path"`
-	SizeBytes int32  `json:"sizeBytes"`
-	Extension string `json:"extension"`
-}
-
-type FilterRules struct {
-	Include []string `json:"include"`
-	Exclude []string `json:"exclude"`
-}
-
-type Profile struct {
-	ID        string    `json:"id"`
-	Name      string    `json:"name"`
-	RulesYaml string    `json:"rulesYaml"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
-}
-
 // --- PROTO MAPPERS ---
 
 func AnalysisToProto(native *DataSourceAnalysis) *datasourcesv1.DataSourceAnalysisPb {
@@ -202,7 +203,7 @@ func MetadataToProto(native *DataSourceMetadata) *datasourcesv1.DataSourceMetada
 	}
 
 	pb := &datasourcesv1.DataSourceMetadataPb{
-		Id:              native.ID,
+		Id:              native.ID.String(),
 		Repo:            native.Repo,
 		Branch:          native.Branch,
 		SyncedCommitSha: native.SyncedCommitSha,
@@ -223,8 +224,10 @@ func ProtoToMetadata(pb *datasourcesv1.DataSourceMetadataPb) *DataSourceMetadata
 		return nil
 	}
 
+	dsID, _ := urn.Parse(pb.Id)
+
 	meta := &DataSourceMetadata{
-		ID:              pb.Id,
+		ID:              dsID,
 		Repo:            pb.Repo,
 		Branch:          pb.Branch,
 		SyncedCommitSha: pb.SyncedCommitSha,
@@ -265,7 +268,7 @@ func ProfileToProto(native *Profile) *datasourcesv1.ProfilePb {
 		return nil
 	}
 	return &datasourcesv1.ProfilePb{
-		Id:        native.ID,
+		Id:        native.ID.String(),
 		Name:      native.Name,
 		RulesYaml: native.RulesYaml,
 		CreatedAt: native.CreatedAt.Format(time.RFC3339),
@@ -278,8 +281,10 @@ func ProtoToProfile(pb *datasourcesv1.ProfilePb) *Profile {
 		return nil
 	}
 
+	profID, _ := urn.Parse(pb.Id)
+
 	prof := &Profile{
-		ID:        pb.Id,
+		ID:        profID,
 		Name:      pb.Name,
 		RulesYaml: pb.RulesYaml,
 	}

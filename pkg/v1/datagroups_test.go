@@ -7,20 +7,26 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	urn "github.com/tinywideclouds/go-platform/pkg/net/v1"
 )
 
 func TestDataGroupMappers(t *testing.T) {
 	desc := "A logical group for backend APIs"
-	profID := "prof-123"
+
+	dgID, _ := urn.Parse("urn:data-group:456")
+	profID, _ := urn.Parse("urn:profile:123")
+	ds1, _ := urn.Parse("urn:data-source:1")
+	ds2, _ := urn.Parse("urn:data-source:2")
+
 	now := time.Now().Truncate(time.Second).UTC() // Truncate for RFC3339 equality
 
 	native := &DataGroup{
-		ID:          "dg-456",
+		ID:          dgID,
 		Name:        "Backend APIs",
 		Description: &desc,
 		Sources: []*DataGroupSource{
-			{DataSourceID: "ds-1", ProfileID: &profID},
-			{DataSourceID: "ds-2", ProfileID: nil},
+			{DataSourceID: ds1, ProfileID: &profID},
+			{DataSourceID: ds2, ProfileID: nil},
 		},
 		Metadata:  map[string]string{"compiledCacheId": "cache-xyz"},
 		CreatedAt: now,
@@ -30,12 +36,12 @@ func TestDataGroupMappers(t *testing.T) {
 	// Test Native -> Proto
 	pb := DataGroupToProto(native)
 	require.NotNil(t, pb)
-	assert.Equal(t, "dg-456", pb.Id)
+	assert.Equal(t, dgID.String(), pb.Id)
 	assert.Equal(t, "Backend APIs", pb.Name)
 	assert.Equal(t, desc, *pb.Description)
 	assert.Len(t, pb.Sources, 2)
-	assert.Equal(t, "ds-1", pb.Sources[0].DataSourceId)
-	assert.Equal(t, profID, *pb.Sources[0].ProfileId)
+	assert.Equal(t, ds1.String(), pb.Sources[0].DataSourceId)
+	assert.Equal(t, profID.String(), *pb.Sources[0].ProfileId)
 	assert.Equal(t, "cache-xyz", pb.Metadata["compiledCacheId"])
 	assert.Equal(t, now.Format(time.RFC3339), *pb.CreatedAt)
 
@@ -50,8 +56,10 @@ func TestDataGroupMappers(t *testing.T) {
 
 func TestDataGroupJSONSerialization(t *testing.T) {
 	desc := "Test Group"
+	dgID, _ := urn.Parse("urn:data-group:1")
+
 	native := DataGroup{
-		ID:          "dg-1",
+		ID:          dgID,
 		Name:        "Test",
 		Description: &desc,
 	}
